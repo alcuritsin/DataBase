@@ -48,6 +48,7 @@ namespace DataBaseLib
 
             if (!res) return false;
             _db.ConnectionString = _connection.ToString();
+            _command.Connection = _db;
             return true;
         }
         
@@ -57,10 +58,74 @@ namespace DataBaseLib
 
             if (!res) return false;
             _db.ConnectionString = _connection.ToString();
+            _command.Connection = _db;
             return true;
         }
 
         #endregion
+
+        #region Request
+
+        private bool CheckSql(string sql)
+        {
+            return !string.IsNullOrEmpty(sql) && !string.IsNullOrWhiteSpace(sql);
+        }
+
+        private bool CheckConnectToDb()
+        {
+            try
+            {
+                _db.Open();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
         
+        public bool ExecuteSelect(in string sql, out MySqlDataReader outputData)
+        {
+            outputData = null;
+
+            if (!CheckSql(sql))
+            {
+                return false;
+            }
+
+            if (!CheckConnectToDb())
+            {
+                return false;
+            }
+            
+            _command.CommandText = sql;
+            outputData = _command.ExecuteReader();
+
+            _db.Close();
+
+            return outputData.HasRows;
+        }
+
+        public bool ExecuteNotSelect(in string sql, out int countRows)
+        {
+            countRows = 0;
+            
+            if (!CheckSql(sql))
+            {
+                return false;
+            }
+
+            if (!CheckConnectToDb())
+            {
+                return false;
+            }
+            
+            _command.CommandText = sql;
+            countRows = _command.ExecuteNonQuery();
+
+            return countRows > 0;
+        }
+
+        #endregion
     }
 }
